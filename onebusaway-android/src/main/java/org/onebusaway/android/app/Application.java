@@ -16,6 +16,21 @@
  */
 package org.onebusaway.android.app;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
+import android.hardware.GeomagneticField;
+import android.location.Location;
+import android.location.LocationManager;
+import android.preference.PreferenceManager;
+import android.text.TextUtils;
+import android.util.Log;
+import android.os.Build;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+
 import com.google.android.gms.analytics.GoogleAnalytics;
 import com.google.android.gms.analytics.Tracker;
 import com.google.android.gms.common.ConnectionResult;
@@ -23,7 +38,6 @@ import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.tasks.Task;
-
 import com.microsoft.embeddedsocial.sdk.EmbeddedSocial;
 
 import org.onebusaway.android.BuildConfig;
@@ -39,18 +53,6 @@ import org.onebusaway.android.util.BuildFlavorUtils;
 import org.onebusaway.android.util.EmbeddedSocialUtils;
 import org.onebusaway.android.util.LocationUtils;
 import org.onebusaway.android.util.PreferenceUtils;
-
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.content.pm.PackageManager.NameNotFoundException;
-import android.hardware.GeomagneticField;
-import android.location.Location;
-import android.location.LocationManager;
-import android.preference.PreferenceManager;
-import android.text.TextUtils;
-import android.util.Log;
 
 import java.security.MessageDigest;
 import java.util.HashMap;
@@ -70,6 +72,9 @@ public class Application extends MultiDexApplication {
 
     // Region preference (long id)
     private static final String TAG = "Application";
+
+    public static final String CHANNEL_TRIP_PLAN_UPDATES_ID = "ch101";
+    public static final String CHANNEL_ARRIVAL_REMINDERS_ID = "ch102";
 
     private SharedPreferences mPrefs;
 
@@ -113,6 +118,8 @@ public class Application extends MultiDexApplication {
 
         ObaAnalytics.initAnalytics(this);
         reportAnalytics();
+
+        createNotificationChannels();
     }
 
     /**
@@ -598,6 +605,26 @@ public class Application extends MultiDexApplication {
         return ((Application.get().getCurrentRegion() != null
                 && Application.get().getCurrentRegion().getSupportsOtpBikeshare())
                 || !TextUtils.isEmpty(Application.get().getCustomOtpApiUrl()));
+    }
+
+    private void createNotificationChannels() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel1 = new NotificationChannel(
+                    CHANNEL_TRIP_PLAN_UPDATES_ID,
+                    "Trip plan notifications (beta)",
+                    NotificationManager.IMPORTANCE_DEFAULT);
+            channel1.setDescription("After planning a trip, send notifications if the trip is delayed or no longer recommended.");
+
+            NotificationChannel channel2 = new NotificationChannel(
+                    CHANNEL_ARRIVAL_REMINDERS_ID,
+                    "Bus arrival notifications",
+                    NotificationManager.IMPORTANCE_DEFAULT);
+            channel2.setDescription("Notifications to remind the user of an arriving bus.");
+
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            manager.createNotificationChannel(channel1);
+            manager.createNotificationChannel(channel2);
+        }
     }
 
 }
