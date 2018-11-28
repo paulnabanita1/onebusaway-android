@@ -192,9 +192,9 @@ public class TripService extends Service {
         final String action = intent.getAction();
         final TaskContextImpl taskContext = new TaskContextImpl(startId);
         final Uri uri = intent.getData();
-        //Log.d(TAG, "Handle command: startId=" + startId +
-        //        " action=" + action +
-        //        " uri=" + uri);
+        Log.d(TAG, "Handle command: startId=" + startId +
+               " action=" + action +
+                " uri=" + uri);
 
         if (ACTION_SCHEDULE.equals(action)) {
             mThreadPool.submit(new SchedulerTask(this, taskContext, uri));
@@ -242,6 +242,7 @@ public class TripService extends Service {
     // Trip helpers
     //
     public static void scheduleAll(Context context) {
+        Log.d(TAG, "Triggered scehduleAll()");
         final Intent intent = new Intent(context, TripService.class);
         intent.setAction(TripService.ACTION_SCHEDULE);
         intent.setData(ObaContract.Trips.CONTENT_URI);
